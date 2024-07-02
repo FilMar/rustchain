@@ -8,6 +8,7 @@ mod blockchain;
 
 #[tokio::main]
 async fn main() {
+    println!("blockchain serve on localhost:3000...");
     let shared_chain = Arc::new(Mutex::new(Chain::new(5)));
     let app = Router::new()
         .route("/", routing::get(api::get_chain))
