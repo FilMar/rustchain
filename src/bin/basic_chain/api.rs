@@ -1,13 +1,15 @@
 use crate::blockchain::Chain;
 use axum::{extract::Json, extract::State};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub async fn get_chain(State(shared_chain): State<Arc<Mutex<Chain>>>) -> Json<Value> {
+pub async fn get_chain(
+    State(shared_chain): State<Arc<Mutex<Chain>>>,
+) -> Json<Vec<Map<String, Value>>> {
     let chain = shared_chain.lock().await;
     let chain = chain.get_chain();
-    Json(json!({ "chain": chain }))
+    Json(chain)
 }
 
 pub async fn add_block(

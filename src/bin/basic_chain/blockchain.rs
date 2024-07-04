@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use hex;
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,11 +57,12 @@ impl Chain {
         blockchain
     }
 
-    pub fn get_chain(&self) -> String {
-        match serde_json::to_string_pretty(&self.chain) {
-            Ok(chain) => chain,
-            Err(_) => panic!("Error serializing the chain"),
-        }
+    pub fn get_chain(&self) -> Vec<Map<String, Value>> {
+        self.chain
+            .iter()
+            .map(|block| serde_json::to_string(block).unwrap())
+            .map(|block| serde_json::from_str::<Map<String, Value>>(&block).unwrap())
+            .collect::<Vec<Map<String, Value>>>()
     }
     pub fn create_block(&mut self, data: String) {
         self.verify_chain();
