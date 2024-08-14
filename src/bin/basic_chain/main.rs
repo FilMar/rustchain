@@ -12,7 +12,7 @@ async fn main() {
     let shared_chain = Arc::new(Mutex::new(Chain::new(4)));
     let app = Router::new()
         .route("/", routing::get(api::get_chain))
-        .route("/add", routing::post(api::add_block))
+        .route("/", routing::post(api::add_block))
         .with_state(shared_chain);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

@@ -3,6 +3,7 @@ name = "rustchain"
 version = "0.1.0"
 edition = "2021"
 
+
 [dependencies]
 chrono = {version="0.4", features = ["serde"]}
 sha2 = "0.9.8"
@@ -13,3 +14,5 @@ hex = "0.4"
 log = "0.4"
 pretty_env_logger = "0.4"
 axum = { version = "0.7", features = ["json", "tokio"] }
+axum-template = "2.4.0"
+askama = "0.12.1"

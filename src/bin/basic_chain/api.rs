@@ -9,6 +9,12 @@ pub async fn get_chain(
 ) -> Json<Vec<Map<String, Value>>> {
     let chain = shared_chain.lock().await;
     let chain = chain.get_chain();
+    let mut result = r#"
+        sdfsd
+        sdfsdf
+        sdfsdf
+        "#;
+    println!("{}", result);
     Json(chain)
 }
 
