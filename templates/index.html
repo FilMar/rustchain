@@ -3,19 +3,29 @@
 
 <head>
     <title>dashboard</title>
+    <script src="https://unpkg.com/htmx.org@2.0.2"
+        integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.2/dist/ext/json-enc.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1>{{ name }}</h1>
-                <p>This is a paragraph.</p>
-            </div>
+    <div id="container">
+        <div>
+            <h2>Chain</h2>
         </div>
+        {%for block in chain%}
+        <li>
+            {{block["index"]}} - {{block["timestamp"]}} - {{block["data"]}}
+        </li>
+        {%endfor%}
     </div>
     <div>
-
+        <form hx-post="/" hx-target="#container" hx-swap="beforeend" hx-ext="json-enc">
+            <label for="data">data:</label>
+            <input type="text" id="data" name="data">
+            <button>mine</button>
+        </form>
+    </div>
 </body>
-
 </html>

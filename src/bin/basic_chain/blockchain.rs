@@ -68,6 +68,16 @@ impl Chain {
         self.chain.push(validated_block)
     }
 
+    pub fn replace_chain(&mut self, chain: Vec<Map<String, Value>>) {
+        let mut blocks = vec![];
+        for block in chain {
+            blocks.push(serde_json::from_value::<Block>(Value::Object(block)).unwrap());
+        }
+        blocks.sort_by(|a, b| a.index.cmp(&b.index));
+        self.chain = blocks;
+        self.verify_chain();
+    }
+
     fn validate_block(&self, block: &mut Block) -> Block {
         let mut nonce = 1u32;
         loop {
@@ -144,26 +154,14 @@ impl Chain {
     }
 
     fn crete_block_file(&self, block: &Block) {
-        let dir = "blocks";
-        std::fs::create_dir_all(&dir).unwrap();
-        let block_file = format!("{}/{}", dir, block.hash());
-        std::fs::write(block_file, serde_json::to_string_pretty(block).unwrap()).unwrap();
+        print!("save on file not implemented");
     }
 
     fn load_block_file(&self, hash: &str) -> Block {
-        let block_file = format!("blocks/{}", hash);
-        let block = std::fs::read_to_string(block_file).unwrap();
-        serde_json::from_str(&block).unwrap()
+        todo!();
     }
 
     fn reload_chain(&mut self) {
-        let mut blocks = vec![];
-        for file in std::fs::read_dir("blocks").unwrap() {
-            blocks.push(self.load_block_file(&file.unwrap().file_name().into_string().unwrap()));
-        }
-        blocks.sort_by(|a, b| a.index.cmp(&b.index));
-        self.chain = blocks;
-        println!("{}", serde_json::to_string_pretty(&self.chain).unwrap());
-        self.verify_chain();
+        todo!();
     }
 }
