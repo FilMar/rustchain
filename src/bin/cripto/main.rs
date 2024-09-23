@@ -1,11 +1,11 @@
 use std::sync::Arc;
-
 use axum::{extract::State, http::status, response::IntoResponse, routing, serve, Json, Router};
 use serde_json::{Map, Value};
 use tokio::{net::TcpListener, sync::Mutex};
-use crate::cripto_protocol::CriptoCurrency;
+use cripto_protocol::CriptoCurrency;
 
 mod cripto_protocol;
+#[path ="../basic_chain/mod.rs"]
 mod basic_chain;
 
 

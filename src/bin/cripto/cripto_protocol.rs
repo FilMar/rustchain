@@ -1,6 +1,6 @@
-use crate::basic_chain::blockchain::Chain;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_string_pretty, Map, Value};
+use crate::basic_chain::blockchain::Chain;
+use serde_json::{Map, Value};
 use std::mem::drop;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -64,7 +64,6 @@ impl CriptoCurrency {
                             serde_json::to_string::<Vec<Transaction>>(&data).unwrap(),
                         );
                         let chain = chain.get_chain();
-                        print!("{:?}", chain);
                         temp_mempool.clear();
                     }
                     _ => {
@@ -75,7 +74,6 @@ impl CriptoCurrency {
                         );
                         temp_mempool.drain(0..5);
                         let chain = chain.get_chain();
-                        print!("{}", to_string_pretty(&chain).unwrap());
                     }
                 }
                 drop(temp_mempool);
@@ -84,6 +82,7 @@ impl CriptoCurrency {
         });
     }
 }
+
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 struct Transaction {

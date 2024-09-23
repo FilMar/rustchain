@@ -1,32 +1,17 @@
 use crate::blockchain::Chain;
-use askama::Template;
+use axum::http::status;
 use axum::Json;
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{Html, IntoResponse},
-};
+use axum::{extract::State, response::IntoResponse};
 use serde_json::{Map, Value};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-#[derive(Template)]
-#[template(path = "index.html")]
-pub struct IndexTemplate {
-    chain: Vec<Map<String, Value>>,
-}
-
-#[derive(Template)]
-#[template(path = "chain.html")]
-struct ChainTemplate {
-    block: Map<String, Value>,
-}
-
 pub async fn get_chain(State(shared_chain): State<Arc<Mutex<Chain>>>) -> impl IntoResponse {
     let chain = shared_chain.lock().await;
-    let chain = chain.get_chain();
-    let template = IndexTemplate { chain };
-    Html(template.render().unwrap())
+    match serde_json::to_string_pretty(&chain.get_chain()) {
+        Ok(msg) => (status::StatusCode::OK, msg),
+        Err(err) => (status::StatusCode::INTERNAL_SERVER_ERROR, err.to_string()),
+    }
 }
 
 pub async fn add_block(
@@ -34,10 +19,15 @@ pub async fn add_block(
     data: Json<Map<String, Value>>,
 ) -> impl IntoResponse {
     let mut chain = shared_chain.lock().await;
-    let data = data.get("data").unwrap().as_str().unwrap();
-    chain.create_block(data.to_string());
-    let template = ChainTemplate {
-        block: chain.get_chain().last().unwrap().clone(),
-    };
-    Html(template.render().unwrap())
+    match data.get("data") {
+        None => (
+            status::StatusCode::NOT_FOUND,
+            "il campo data e' obbligatorio",
+        ),
+        Some(Value::String(data)) => {
+            chain.create_block(data.to_string());
+            (status::StatusCode::CREATED, "blocco creato con successo")
+        }
+        _ => (status::StatusCode::NOT_FOUND, "campo data nel formato sbagliato, inviare una string")
+    }
 }

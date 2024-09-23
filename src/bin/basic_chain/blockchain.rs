@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use chrono::{DateTime, Utc};
 use hex;
 use serde::{Deserialize, Serialize};
@@ -18,6 +20,7 @@ pub struct Chain {
     chain: Vec<Block>,
 }
 
+
 impl Block {
     fn new(index: u64, data: String, prev_hash: String) -> Block {
         Block {
@@ -37,6 +40,7 @@ impl Block {
             .for_each(|byte| hasher.update(&[byte]));
         hex::encode(hasher.finalize())
     }
+
 }
 
 impl Chain {
@@ -66,6 +70,23 @@ impl Chain {
         let mut new_block = Block::new(last_block.index + 1, data, last_block.hash());
         let validated_block = self.validate_block(&mut new_block);
         self.chain.push(validated_block)
+    }
+
+    pub fn add_external_blocks(&mut self, blocks: Vec<Map<String, Value>>) -> Result<(), &str> {
+        self.verify_chain();
+        let blocks = blocks.iter().map(|a| serde_json::from_value::<Block>(Value::Object(a.clone())).unwrap()).collect::<Vec<Block>>();
+        for block in blocks {
+            let last_block = self.get_last_block();
+            // WARNING: in questo modo aggiungo parzialmente la lista di blocchi, e' corretto?
+            if last_block.index != block.index - 1 {
+                return Err("index non corretto, corrompe la catena");
+            }
+            if last_block.hash() != block.prev_hash {
+                return Err("prev hash non corretto, corrompe la catena");
+            }
+            self.chain.push(block);
+        }
+        Ok(())
     }
 
     pub fn replace_chain(&mut self, chain: Vec<Map<String, Value>>) {
