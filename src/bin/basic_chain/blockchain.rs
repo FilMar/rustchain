@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use chrono::{DateTime, Utc};
 use hex;
 use serde::{Deserialize, Serialize};
@@ -15,11 +13,11 @@ struct Block {
     prev_hash: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct Chain {
     proof: u8,
     chain: Vec<Block>,
 }
-
 
 impl Block {
     fn new(index: u64, data: String, prev_hash: String) -> Block {
@@ -40,7 +38,6 @@ impl Block {
             .for_each(|byte| hasher.update(&[byte]));
         hex::encode(hasher.finalize())
     }
-
 }
 
 impl Chain {
@@ -72,9 +69,12 @@ impl Chain {
         self.chain.push(validated_block)
     }
 
-    pub fn add_external_blocks(&mut self, blocks: Vec<Map<String, Value>>) -> Result<(), &str> {
+    pub fn add_external_blocks(&mut self, blocks: Vec<Map<String, Value>>) -> Result<(), &'static str> {
         self.verify_chain();
-        let blocks = blocks.iter().map(|a| serde_json::from_value::<Block>(Value::Object(a.clone())).unwrap()).collect::<Vec<Block>>();
+        let blocks = blocks
+            .iter()
+            .map(|a| serde_json::from_value::<Block>(Value::Object(a.clone())).unwrap())
+            .collect::<Vec<Block>>();
         for block in blocks {
             let last_block = self.get_last_block();
             // WARNING: in questo modo aggiungo parzialmente la lista di blocchi, e' corretto?

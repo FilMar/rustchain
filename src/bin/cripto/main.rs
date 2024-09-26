@@ -1,13 +1,11 @@
-use std::sync::Arc;
-use axum::{extract::State, http::status, response::IntoResponse, routing, serve, Json, Router};
-use serde_json::{Map, Value};
-use tokio::{net::TcpListener, sync::Mutex};
+use axum::{routing, serve, Router};
 use cripto_protocol::CriptoCurrency;
+use tokio::net::TcpListener;
 
-mod cripto_protocol;
-#[path ="../basic_chain/mod.rs"]
+#[path = "../basic_chain/mod.rs"]
 mod basic_chain;
-
+mod cripto_protocol;
+mod api;
 
 #[tokio::main]
 async fn main() {
@@ -17,46 +15,32 @@ async fn main() {
         bitcoin_clone.start_mining().await;
     });
     let router = Router::new()
-        .route("/", routing::get(get_chain))
-        .route("/transaction", routing::post(create_transaction))
+        .route("/", routing::get(api::get_chain))
+        .route("/transaction", routing::post(api::create_transaction))
+        .route("/ntn/add-blocks", routing::post(api::add_external_blocks))
+        .route("/ntn/add-transaction", routing::post(api::add_external_transaction))
+        .route("/ntn/addnode", routing::post(api::add_external_transaction))
         .with_state(bitcoin);
-
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-
     serve(listener, router).await.unwrap();
-
-
 }
 
 
-type ArcChain = State<CriptoCurrency>;
-// user to node
-async fn create_transaction(State(mut criptochain): ArcChain , Json(data): Json<Map<String, Value>>) -> impl IntoResponse {
-    let sender = match data.get("from") {
-        Some(Value::String(a)) => a,
-        _ => return (status::StatusCode::BAD_REQUEST, "serve chi paga"),
-    }.to_string();
-    let receiver = match data.get("to"){
-        Some(Value::String(a)) => a,
-        _ => return (status::StatusCode::BAD_REQUEST, "serve chi riceve il pagamento"),
-    }.to_string();
-    let amount = match data.get("amount"){
-        Some(Value::String(a)) => a,
-        _ => return (status::StatusCode::BAD_REQUEST, "serve quanto paga"),
-    }.parse().unwrap();
-    criptochain.add_transaction(sender, receiver, amount, 0.05).await;
-    (status::StatusCode::CREATED, "ok")
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use reqwest::Client;
 
-async fn get_chain(State(criptochain): ArcChain) -> impl IntoResponse {
-    let res = match serde_json::to_string(&criptochain.get_chain().await) {
-        Ok(e) => e,
-        Err(e) => return (status::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
-    (status::StatusCode::OK,
-     res)
+    fn prepare_chain() {
+        let bitcoin = CriptoCurrency::new("test_fil".to_string(), 3, Vec::new());
+        let mut bitclone = bitcoin.clone();
+        tokio::spawn(async move {
+            bitclone
+        })
+
+
+    }
+
+
+
 }
-// node to node
-async fn recive_new_block(State(criptochain): State<Arc<Mutex<CriptoCurrency>>>) -> impl IntoResponse {}
-async fn send_mempool(State(criptochain): State<Arc<Mutex<CriptoCurrency>>>) -> impl IntoResponse {}
-async fn add_new_node(State(criptochain): State<Arc<Mutex<CriptoCurrency>>>) -> impl IntoResponse {}
