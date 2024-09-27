@@ -53,6 +53,20 @@ pub async fn add_external_blocks(
     }
 }
 
+pub async fn add_external_node(
+    State(criptochain): ArcChain,
+    Json(data): Json<Map<String, Value>>,
+) -> impl IntoResponse {
+    match data.get("url") {
+        Some(Value::String(url)) => {
+            criptochain.add_node(url.clone()).await;
+            (status::StatusCode::OK, format!("nodo {url} aggiunto con successo")).into_response()
+        }
+        None => (status::StatusCode::BAD_REQUEST, "url necessario").into_response(),
+        _ =>  (status::StatusCode::BAD_REQUEST, "url di tipo errato").into_response(),
+    }
+}
+
 // WARNING: per ora riceve una transazione per volta
 pub async fn add_external_transaction(
     State(mut criptochain): ArcChain,

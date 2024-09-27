@@ -34,11 +34,6 @@ mod tests {
     fn prepare_chain() {
         let bitcoin = CriptoCurrency::new("test_fil".to_string(), 3, Vec::new());
         let mut bitclone = bitcoin.clone();
-        tokio::spawn(async move {
-            bitclone
-        })
-
-
     }
 
 

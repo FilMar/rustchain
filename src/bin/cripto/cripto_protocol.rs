@@ -50,14 +50,19 @@ impl CriptoCurrency {
         let mut mempool = self.mempool.lock().await;
         mempool.push(transaction);
         println!("Transaction added to mempool {}", mempool.len());
-
     }
+
     pub async fn add_external_blocks(
         &mut self,
         blocks: Vec<Map<String, Value>>,
     ) -> Result<(), &str> {
         let mut blockchain = self.blockchain.lock().await;
         blockchain.add_external_blocks(blocks)
+    }
+
+    pub async fn add_node(&self, node: String) {
+        let mut nodes = self.nodes.lock().await;
+        nodes.push(node);
     }
 
     pub async fn start_mining(&mut self) {
@@ -108,12 +113,13 @@ struct Transaction {
 
 // funzioni decentralizzazione
 impl CriptoCurrency {
-
-    async fn send_transaction(&self, tr: Map<String, Value>) {
+    async fn send_transaction(&self, tr: &Map<String, Value>) {
         let nodes = self.nodes.lock().await;
         for node in nodes.to_vec() {
             let url = format!("{node}/ntn/add-transaction");
-            let res = Client::new().post(url);
+            let res = Client::new()
+                .post(url)
+                .body(serde_json::to_string(tr).unwrap());
             println!("{res:?}");
         }
     }
@@ -121,15 +127,17 @@ impl CriptoCurrency {
         let nodes = self.nodes.lock().await;
         for node in nodes.to_vec() {
             let url = format!("{node}/ntn/add-blocks");
-            let res = Client::new().post(url).body(blocks);
+            let res = Client::new()
+                .post(url)
+                .body(serde_json::to_string(&blocks).unwrap());
             println!("{res:?}");
         }
     }
-    async fn send_new_node(&self, tr: Transaction) {
+    async fn send_new_node(&self, node: &'static str) {
         let nodes = self.nodes.lock().await;
         for node in nodes.to_vec() {
             let url = format!("{node}/ntn/add-block");
-            let res = Client::new().post(url);
+            let res = Client::new().post(url).body(node);
             println!("{res:?}");
         }
     }
