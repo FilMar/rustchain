@@ -1,7 +1,7 @@
 use crate::basic_chain::blockchain::Chain;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value};
 use std::mem::drop;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -68,7 +68,7 @@ impl CriptoCurrency {
     pub async fn start_mining(&mut self) {
         let chain = self.blockchain.clone();
         let mempool = self.mempool.clone();
-        let mut self2 = self.clone();
+        let self2 = self.clone();
         tokio::spawn(async move {
             loop {
                 let mut temp_mempool = mempool.lock().await;
