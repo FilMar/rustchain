@@ -21,3 +21,4 @@ hex = "0.4"
 axum = { version = "0.7", features = ["json", "tokio"] }
 axum-template = "2.4.0"
 reqwest = { version = "0.12.5", features = ["json"] }
+futures = "0.3.31"

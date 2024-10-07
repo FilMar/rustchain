@@ -1,7 +1,7 @@
 use crate::basic_chain::blockchain::Chain;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::{json, Map, Value};
 use std::mem::drop;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -12,7 +12,7 @@ pub struct CriptoCurrency {
     mempool: Arc<Mutex<Vec<Transaction>>>,
     nodes: Arc<Mutex<Vec<String>>>,
     blockchain: Arc<Mutex<Chain>>,
-    conflict: Option<u8>,
+    _conflict: Option<u8>,
 }
 
 impl CriptoCurrency {
@@ -24,16 +24,20 @@ impl CriptoCurrency {
             mempool: Arc::new(Mutex::new(Vec::new())),
             nodes: Arc::new(Mutex::new(nodes)),
             blockchain: Arc::new(Mutex::new(Chain::new(proof))),
-            conflict: None,
+            _conflict: None,
         };
+        let mut cryptocopy = crypto.clone();
+        tokio::spawn(async move {
+            cryptocopy.send_node(cryptocopy.name.clone()).await;
+            cryptocopy.start_mining().await;
+        });
         crypto
     }
 
     pub async fn get_chain(&self) -> Vec<Map<String, Value>> {
         self.blockchain.lock().await.get_chain()
     }
-
-    pub async fn add_transaction(
+    pub async fn add_external_transaction(
         &mut self,
         sender: String,
         receiver: String,
@@ -50,6 +54,29 @@ impl CriptoCurrency {
         let mut mempool = self.mempool.lock().await;
         mempool.push(transaction);
         println!("Transaction added to mempool {}", mempool.len());
+    }
+    pub async fn add_transaction(
+        &self,
+        receiver: String,
+        amount: f32,
+        fee: f32,
+    ) {
+        let transaction = Transaction {
+            sender: self.name.clone(),
+            receiver: receiver.clone(),
+            amount: amount.clone(),
+            fee: fee.clone(),
+            timestamp: chrono::Utc::now(),
+        };
+        {
+            let mut mempool = self.mempool.lock().await;
+            mempool.push(transaction.clone());
+            println!("Transaction added to mempool {}", mempool.len());
+        };
+        match serde_json::to_value(transaction) {
+            Ok(Value::Object(trans)) => self.send_transaction(&trans).await,
+            _ => ()
+        };
     }
 
     pub async fn add_external_blocks(
@@ -133,11 +160,17 @@ impl CriptoCurrency {
             println!("{res:?}");
         }
     }
-    async fn send_new_node(&self, node: &'static str) {
+    async fn send_node(&self, new_node: String) {
         let nodes = self.nodes.lock().await;
         for node in nodes.to_vec() {
             let url = format!("{node}/ntn/add-block");
-            let res = Client::new().post(url).body(node);
+            let data = match json!({
+                "name": new_node
+            }) {
+                Value::String(data) => data,
+                _ => "".to_string(),
+            }  ;
+            let res = Client::new().post(url).body(data);
             println!("{res:?}");
         }
     }

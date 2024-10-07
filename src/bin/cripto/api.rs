@@ -8,11 +8,6 @@ pub async fn create_transaction(
     State(mut criptochain): ArcChain,
     Json(data): Json<Map<String, Value>>,
 ) -> impl IntoResponse {
-    let sender = match data.get("from") {
-        Some(Value::String(a)) => a,
-        _ => return (status::StatusCode::BAD_REQUEST, "serve chi paga"),
-    }
-    .to_string();
     let receiver = match data.get("to") {
         Some(Value::String(a)) => a,
         _ => {
@@ -30,7 +25,7 @@ pub async fn create_transaction(
     .parse()
     .unwrap();
     criptochain
-        .add_transaction(sender, receiver, amount, 0.05)
+        .add_transaction(receiver, amount, 0.05)
         .await;
     (status::StatusCode::CREATED, "ok")
 }
@@ -83,7 +78,7 @@ pub async fn add_external_transaction(
             Some(Value::Number(amount)),
         ) => {
             criptochain
-                .add_transaction(
+                .add_external_transaction(
                     sender.to_string(),
                     receiver.to_string(),
                     amount.as_f64().unwrap() as f32,
