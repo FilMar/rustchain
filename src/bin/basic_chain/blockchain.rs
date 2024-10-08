@@ -174,15 +174,13 @@ impl Chain {
         self.chain.push(genesis_block);
     }
 
-    fn crete_block_file(&self, block: &Block) {
-        print!("save on file not implemented");
+    fn crete_block_file(&self, _block: &Block) {
     }
 
-    fn load_block_file(&self, hash: &str) -> Block {
+    fn _load_block_file(&self, _hash: &str) -> Block {
         todo!();
     }
 
     fn reload_chain(&mut self) {
-        todo!();
     }
 }

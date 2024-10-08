@@ -1,0 +1,23 @@
+
+
+services:
+  filippo:
+    image: ...
+    environment:
+      NAME: filippo
+      NODES: marco io
+      PROVE: 3
+  marco:
+    image: ...
+    environment:
+      NAME: marco
+      NODES: filippo io
+      PROVE: 3
+  io:
+    image: ...
+    ports:
+      - 3000:3000
+    environment:
+      NAME: io
+      NODES: marco filippo
+      PROVE: 3

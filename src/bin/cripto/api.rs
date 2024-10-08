@@ -43,7 +43,7 @@ pub async fn add_external_blocks(
     Json(data): Json<Vec<Map<String, Value>>>,
 ) -> impl IntoResponse {
     match criptochain.add_external_blocks(data).await {
-        Ok(_) => (status::StatusCode::INTERNAL_SERVER_ERROR, "").into_response(),
+        Ok(_) => (status::StatusCode::NO_CONTENT, "").into_response(),
         Err(e) => (status::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }
