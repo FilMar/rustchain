@@ -87,9 +87,9 @@ impl CriptoCurrency {
         blockchain.add_external_blocks(blocks)
     }
 
-    pub async fn add_node(&self, node: String) {
+    pub async fn add_node(&self, node: &str) {
         let mut nodes = self.nodes.lock().await;
-        nodes.push(node);
+        nodes.push(node.to_string());
     }
 
     pub async fn start_mining(&mut self) {

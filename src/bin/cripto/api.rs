@@ -1,31 +1,23 @@
 use crate::cripto_protocol::CriptoCurrency;
 use axum::{extract::State, http::status, response::IntoResponse, Json};
+use serde::Deserialize;
 use serde_json::{Map, Value};
 
 type ArcChain = State<CriptoCurrency>;
 // user to node
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTransaction {
+    to: String,
+    amount: f32,
+}
+
 pub async fn create_transaction(
     State(mut criptochain): ArcChain,
-    Json(data): Json<Map<String, Value>>,
+    Json(data): Json<CreateTransaction>,
 ) -> impl IntoResponse {
-    let receiver = match data.get("to") {
-        Some(Value::String(a)) => a,
-        _ => {
-            return (
-                status::StatusCode::BAD_REQUEST,
-                "serve chi riceve il pagamento",
-            )
-        }
-    }
-    .to_string();
-    let amount = match data.get("amount") {
-        Some(Value::String(a)) => a,
-        _ => return (status::StatusCode::BAD_REQUEST, "serve quanto paga"),
-    }
-    .parse()
-    .unwrap();
     criptochain
-        .add_transaction(receiver, amount, 0.05)
+        .add_transaction(data.to, data.amount, 0.05)
         .await;
     (status::StatusCode::CREATED, "ok")
 }
@@ -48,52 +40,42 @@ pub async fn add_external_blocks(
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ExternalNode {
+    url: String,
+}
+
 pub async fn add_external_node(
     State(criptochain): ArcChain,
-    Json(data): Json<Map<String, Value>>,
+    Json(data): Json<ExternalNode>,
 ) -> impl IntoResponse {
-    match data.get("url") {
-        Some(Value::String(url)) => {
-            criptochain.add_node(url.clone()).await;
-            (status::StatusCode::OK, format!("nodo {url} aggiunto con successo")).into_response()
-        }
-        None => (status::StatusCode::BAD_REQUEST, "url necessario").into_response(),
-        _ =>  (status::StatusCode::BAD_REQUEST, "url di tipo errato").into_response(),
-    }
+    criptochain.add_node(&data.url).await;
+    (
+        status::StatusCode::OK,
+        format!("nodo {} aggiunto con successo", data.url),
+    )
+        .into_response()
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExternalTransaction {
+    sender: String,
+    receiver: String,
+    amount: f32,
 }
 
 // WARNING: per ora riceve una transazione per volta
 pub async fn add_external_transaction(
     State(mut criptochain): ArcChain,
-    Json(transaction): Json<Map<String, Value>>,
+    Json(transaction): Json<ExternalTransaction>,
 ) -> impl IntoResponse {
-    match (
-        transaction.get("sender"),
-        transaction.get("receiver"),
-        transaction.get("amount"),
-    ) {
-        (
-            Some(Value::String(sender)),
-            Some(Value::String(receiver)),
-            Some(Value::Number(amount)),
-        ) => {
-            criptochain
-                .add_external_transaction(
-                    sender.to_string(),
-                    receiver.to_string(),
-                    amount.as_f64().unwrap() as f32,
-                    0.05,
-                )
-                .await;
-            (status::StatusCode::CREATED, "").into_response()
-        }
-        (None, _, _) => (status::StatusCode::BAD_REQUEST, "serve quanto paga").into_response(),
-        (_, None, _) => (status::StatusCode::BAD_REQUEST, "serve chi riceve").into_response(),
-        (_, _, None) => (status::StatusCode::BAD_REQUEST, "serve quanto paga").into_response(),
-        (_, _, _) => (
-            status::StatusCode::BAD_REQUEST,
-            "formato transazione non corretto",
+    criptochain
+        .add_external_transaction(
+            transaction.sender,
+            transaction.receiver,
+            transaction.amount,
+            0.05,
         )
-            .into_response(),
-    }
+        .await;
+    (status::StatusCode::CREATED, "").into_response()
 }

@@ -2,19 +2,19 @@
 
 services:
   filippo:
-    image: ...
+    build: .
     environment:
       NAME: filippo
       NODES: marco io
       PROVE: 3
   marco:
-    image: ...
+    build: .
     environment:
       NAME: marco
       NODES: filippo io
       PROVE: 3
   io:
-    image: ...
+    build: .
     ports:
       - 3000:3000
     environment:
